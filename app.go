@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/run-bigpig/jcp/internal/adk/mcp"
@@ -39,7 +40,7 @@ type App struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	dataDir := filepath.Join(".", "data")
+	dataDir := getDataDir()
 
 	// 初始化文件日志
 	if err := logger.InitFileLogger(filepath.Join(dataDir, "logs")); err != nil {
@@ -102,10 +103,10 @@ func NewApp() *App {
 	}
 
 	// 初始化Session服务
-	sessionService := services.NewSessionService()
+	sessionService := services.NewSessionService(dataDir)
 
 	// 初始化Agent配置服务和容器
-	agentConfigService := services.NewAgentConfigService()
+	agentConfigService := services.NewAgentConfigService(dataDir)
 	agentContainer := agent.NewContainer()
 	agentContainer.LoadAgents(agentConfigService.GetAllAgents())
 
@@ -128,6 +129,14 @@ func NewApp() *App {
 		memoryManager:      memoryManager,
 		updateService:      updateService,
 	}
+}
+
+func getDataDir() string {
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil || userConfigDir == "" {
+		return filepath.Join(".", "data")
+	}
+	return filepath.Join(userConfigDir, "jcp")
 }
 
 // startup is called when the app starts. The context is saved

@@ -21,9 +21,9 @@ type SessionService struct {
 }
 
 // NewSessionService 创建Session服务
-func NewSessionService() *SessionService {
+func NewSessionService(dataDir string) *SessionService {
 	ss := &SessionService{
-		sessionsDir: "./data/sessions",
+		sessionsDir: filepath.Join(dataDir, "sessions"),
 		sessions:    make(map[string]*models.StockSession),
 	}
 	ss.ensureDir()

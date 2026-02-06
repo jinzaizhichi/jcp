@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"sync"
 
@@ -18,9 +19,11 @@ type AgentConfigService struct {
 }
 
 // NewAgentConfigService 创建Agent配置服务
-func NewAgentConfigService() *AgentConfigService {
+func NewAgentConfigService(dataDir string) *AgentConfigService {
+	_ = os.MkdirAll(dataDir, 0755)
+
 	acs := &AgentConfigService{
-		configPath: "./data/agents.json",
+		configPath: filepath.Join(dataDir, "agents.json"),
 		agents:     []models.AgentConfig{},
 	}
 	acs.loadOrInitConfig()
