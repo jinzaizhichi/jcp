@@ -3,6 +3,7 @@ module github.com/run-bigpig/jcp
 go 1.24.4
 
 require (
+	cloud.google.com/go/auth v0.17.0
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-ego/gse v1.0.0
@@ -18,7 +19,6 @@ require (
 
 require (
 	cloud.google.com/go v0.123.0 // indirect
-	cloud.google.com/go/auth v0.17.0 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/bep/debounce v1.2.1 // indirect

@@ -4,8 +4,9 @@ package models
 type AIProvider string
 
 const (
-	AIProviderOpenAI AIProvider = "openai"
-	AIProviderGemini AIProvider = "gemini"
+	AIProviderOpenAI   AIProvider = "openai"
+	AIProviderGemini   AIProvider = "gemini"
+	AIProviderVertexAI AIProvider = "vertexai"
 )
 
 // AIConfig AI服务配置
@@ -22,6 +23,12 @@ type AIConfig struct {
 	HttpProxy        string     `json:"httpProxy"`
 	HttpProxyEnabled bool       `json:"httpProxyEnabled"`
 	IsDefault        bool       `json:"isDefault"`
+	// OpenAI Responses API 开关
+	UseResponses bool `json:"useResponses"` // 使用 Responses API 格式（/v1/responses）
+	// Vertex AI 专用字段
+	Project         string `json:"project"`         // GCP 项目 ID
+	Location        string `json:"location"`        // GCP 区域，如 us-central1
+	CredentialsJSON string `json:"credentialsJson"` // 服务账号 JSON 证书内容
 }
 
 // MCPTransportType MCP传输类型

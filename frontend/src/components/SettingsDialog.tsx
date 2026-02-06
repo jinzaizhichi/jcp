@@ -18,6 +18,12 @@ interface AIConfig {
   httpProxy: string;
   httpProxyEnabled: boolean;
   isDefault: boolean;
+  // OpenAI Responses API 开关
+  useResponses: boolean;
+  // Vertex AI 专用字段
+  project: string;
+  location: string;
+  credentialsJson: string;
 }
 
 interface MemoryConfig {
@@ -292,7 +298,7 @@ const CloseConfirmDialog: React.FC<CloseConfirmDialogProps> = ({ onSave, onDisca
 );
 
 // ========== Provider 设置选项卡 ==========
-const PROVIDERS = ['openai', 'gemini'] as const;
+const PROVIDERS = ['openai', 'gemini', 'vertexai'] as const;
 
 interface ProviderSettingsProps {
   configs: AIConfig[];
@@ -321,6 +327,12 @@ const ProviderSettings: React.FC<ProviderSettingsProps> = ({ configs, selectedPr
       httpProxy: '',
       httpProxyEnabled: false,
       isDefault: configs.length === 0,
+      // OpenAI Responses API 默认关闭
+      useResponses: false,
+      // Vertex AI 默认值
+      project: '',
+      location: 'us-central1',
+      credentialsJson: '',
     };
     // 添加到配置列表
     onChange([...configs, newConfig]);
@@ -330,7 +342,12 @@ const ProviderSettings: React.FC<ProviderSettingsProps> = ({ configs, selectedPr
   const currentConfig = configs.find(c => c.provider === selectedProvider) || getOrCreateConfig();
 
   const handleUpdate = (updated: AIConfig) => {
-    onChange(configs.map(c => c.id === updated.id ? updated : c));
+    // 如果设置为默认，取消其他配置的默认状态
+    if (updated.isDefault) {
+      onChange(configs.map(c => c.id === updated.id ? updated : { ...c, isDefault: false }));
+    } else {
+      onChange(configs.map(c => c.id === updated.id ? updated : c));
+    }
   };
 
   return (
@@ -364,24 +381,72 @@ interface ProviderConfigFormProps {
   onChange: (config: AIConfig) => void;
 }
 
-const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({ config, onChange }) => (
-  <div className="space-y-4 fin-panel rounded-lg p-4 border fin-divider">
-    <FormField label="Base URL" value={config.baseUrl} onChange={v => onChange({ ...config, baseUrl: v })} />
-    <FormField label="API Key" value={config.apiKey} onChange={v => onChange({ ...config, apiKey: v })} type="password" />
-    <FormField label="模型名称" value={config.modelName} onChange={v => onChange({ ...config, modelName: v })} />
-    <div className="flex items-center pt-2">
-      <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={config.isDefault}
-          onChange={e => onChange({ ...config, isDefault: e.target.checked })}
-          className="rounded bg-slate-700 border-slate-600"
-        />
-        设为默认
-      </label>
+const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({ config, onChange }) => {
+  const isVertexAI = config.provider === 'vertexai';
+
+  return (
+    <div className="space-y-4 fin-panel rounded-lg p-4 border fin-divider">
+      {/* OpenAI/Gemini 通用字段 */}
+      {!isVertexAI && (
+        <>
+          <FormField label="Base URL" value={config.baseUrl} onChange={v => onChange({ ...config, baseUrl: v })} />
+          <FormField label="API Key" value={config.apiKey} onChange={v => onChange({ ...config, apiKey: v })} type="password" />
+        </>
+      )}
+
+      {/* OpenAI Responses API 开关 */}
+      {config.provider === 'openai' && (
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-slate-400">使用 Responses API</label>
+          <button
+            type="button"
+            onClick={() => onChange({ ...config, useResponses: !config.useResponses })}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+              config.useResponses ? 'bg-[var(--accent)]' : 'bg-slate-600'
+            }`}
+          >
+            <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+              config.useResponses ? 'translate-x-[18px]' : 'translate-x-[3px]'
+            }`} />
+          </button>
+        </div>
+      )}
+
+      {/* Vertex AI 专用字段 */}
+      {isVertexAI && (
+        <>
+          <FormField label="GCP 项目 ID" value={config.project || ''} onChange={v => onChange({ ...config, project: v })} />
+          <FormField label="区域" value={config.location || ''} onChange={v => onChange({ ...config, location: v })} />
+          <div>
+            <label className="block text-sm text-slate-400 mb-1.5">服务账号证书 (JSON)</label>
+            <textarea
+              value={config.credentialsJson || ''}
+              onChange={e => onChange({ ...config, credentialsJson: e.target.value })}
+              rows={6}
+              placeholder="粘贴服务账号 JSON 证书内容，留空则使用 ADC 默认凭据"
+              className="w-full fin-input rounded-lg px-3 py-2 text-white text-sm resize-none font-mono"
+            />
+          </div>
+        </>
+      )}
+
+      {/* 通用字段 */}
+      <FormField label="模型名称" value={config.modelName} onChange={v => onChange({ ...config, modelName: v })} />
+      <div className="flex items-center pt-2">
+        <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
+          <input
+            type="radio"
+            name="defaultProvider"
+            checked={config.isDefault}
+            onChange={() => onChange({ ...config, isDefault: true })}
+            className="w-4 h-4 bg-slate-700 border-slate-600 text-[var(--accent)]"
+          />
+          设为默认
+        </label>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ========== 表单组件 ==========
 interface FormFieldProps {
@@ -785,6 +850,7 @@ const getDefaultModel = (provider: string): string => {
   switch (provider) {
     case 'openai': return 'gpt-4';
     case 'gemini': return 'gemini-pro';
+    case 'vertexai': return 'gemini-1.5-pro';
     default: return '';
   }
 };

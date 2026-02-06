@@ -163,6 +163,10 @@ export namespace models {
 	    httpProxy: string;
 	    httpProxyEnabled: boolean;
 	    isDefault: boolean;
+	    useResponses: boolean;
+	    project: string;
+	    location: string;
+	    credentialsJson: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AIConfig(source);
@@ -182,6 +186,10 @@ export namespace models {
 	        this.httpProxy = source["httpProxy"];
 	        this.httpProxyEnabled = source["httpProxyEnabled"];
 	        this.isDefault = source["isDefault"];
+	        this.useResponses = source["useResponses"];
+	        this.project = source["project"];
+	        this.location = source["location"];
+	        this.credentialsJson = source["credentialsJson"];
 	    }
 	}
 	export class AgentConfig {
