@@ -11,6 +11,7 @@ permissions:
 
 env:
   NODE_OPTIONS: "--max-old-space-size=4096"
+  CGO_ENABLED: 1
 
 jobs:
   build:
