@@ -9,7 +9,7 @@
 
 ## 项目简介
 
-韭菜盘是一款基于 Wails 框架开发的跨平台桌面应用，集成了多个 AI 大模型（OpenAI、Google Gemini 等），通过多 Agent 协作讨论的方式，为用户提供专业的股票分析和投资建议。
+韭菜盘是一款基于 Wails 框架开发的跨平台桌面应用，集成了多个 AI 大模型（OpenAI、Google Gemini、DeepSeek、Kimi、GLM 等 OpenAI 兼容接口），通过多 Agent 协作讨论的方式，为用户提供专业的股票分析和投资建议。
 
 ### 核心特性
 
@@ -29,7 +29,7 @@
 | **前端** | React 18 + TypeScript + Vite |
 | **UI** | TailwindCSS + Lucide Icons |
 | **图表** | Recharts |
-| **AI** | OpenAI / Google Gemini API |
+| **AI** | OpenAI / Gemini / DeepSeek / Kimi / GLM 等 |
 | **分词** | GSE (纯 Go 实现，无 CGO 依赖) |
 
 ## 功能展示
@@ -217,6 +217,10 @@ Agent 配置可在 `data/agents.json` 中自定义。
 ## 许可证
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
+
+## 社区
+
+- [LINUX DO](https://linux.do/) - 真诚、友善、团结、专业，共建你我引以为荣之社区
 
 ## 致谢
 
