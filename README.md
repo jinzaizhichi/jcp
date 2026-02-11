@@ -6,6 +6,7 @@
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://reactjs.org)
 [![Wails](https://img.shields.io/badge/Wails-v2-red.svg)](https://wails.io)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-0.2.0-orange.svg)](https://github.com/run-bigpig/jcp/releases)
 
 ## 项目简介
 
@@ -14,11 +15,14 @@
 ### 核心特性
 
 - **多 Agent 智库** - 多个 AI 专家角色协作讨论，提供多维度分析视角
+- **策略管理系统** - 灵活的策略配置，支持多 Agent 组合与独立 AI 配置
 - **智能记忆系统** - 按股票隔离的长期记忆，AI 能记住历史讨论和关键结论
+- **提示词增强** - AI 驱动的提示词优化，提升 Agent 响应质量
 - **实时行情** - 股票实时数据、K线图表、盘口深度一应俱全
 - **热点舆情** - 聚合百度、抖音、B站、头条等平台热点趋势
 - **研报服务** - 专业研究报告查询和智能分析
 - **MCP 扩展** - 支持 Model Context Protocol，可扩展更多工具能力
+- **布局持久化** - 自动保存窗口和面板布局，下次启动自动恢复
 
 ## 技术栈
 
@@ -50,10 +54,13 @@
 | 📈 **股票行情** | 实时行情数据、多周期K线、盘口深度 |
 | ⭐ **自选管理** | 添加/删除自选股、实时监控 |
 | 🤖 **AI 智库** | 多 Agent 协作分析、智能问答 |
+| 🎯 **策略管理** | 策略配置、Agent 组合、独立 AI 配置 |
 | 🔥 **热点舆情** | 百度/抖音/B站/头条热点聚合 |
 | 📊 **研报服务** | 专业研报查询与分析 |
 | 💬 **会议室** | Agent 多轮讨论、MCP 工具调用 |
 | 🧠 **记忆系统** | 按股票隔离的长期记忆、历史摘要、关键事实提取 |
+| ✨ **提示词增强** | AI 驱动的提示词优化 |
+| 🔌 **连接测试** | AI 配置连通性验证 |
 
 ## 快速开始
 
@@ -134,13 +141,13 @@ ccjc/
 │   └── package.json
 ├── internal/               # Go 后端模块
 │   ├── adk/                # AI 开发工具包
-│   ├── services/           # 业务服务
+│   ├── services/           # 业务服务（策略管理等）
 │   ├── models/             # 数据模型
 │   ├── agent/              # Agent 系统
 │   └── meeting/            # 会议室系统
 └── data/                   # 数据存储
     ├── config.json         # 应用配置
-    ├── agents.json         # Agent 配置
+    ├── strategies.json     # 策略配置
     └── watchlist.json      # 自选股列表
 ```
 
@@ -155,7 +162,10 @@ ccjc/
 | 情绪分析师 | 舆情专家 | 市场情绪、热点追踪 |
 | 风控专家 | 风险管理 | 风险评估、仓位建议 |
 
-Agent 配置可在 `data/agents.json` 中自定义。
+Agent 配置通过策略管理系统进行，支持：
+- 创建多个策略，每个策略包含不同的 Agent 组合
+- 为每个 Agent 或策略配置独立的 AI 模型
+- 使用提示词增强功能优化 Agent 表现
 
 ## 记忆系统
 
