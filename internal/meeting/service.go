@@ -47,13 +47,13 @@ type AIConfigResolver func(aiConfigID string) *models.AIConfig
 
 // Service 会议室服务，编排多专家并行分析
 type Service struct {
-	modelFactory       *adk.ModelFactory
-	toolRegistry       *tools.Registry
-	mcpManager         *mcp.Manager
-	memoryManager      *memory.Manager
-	memoryAIConfig     *models.AIConfig // 记忆管理使用的 LLM 配置
-	moderatorAIConfig  *models.AIConfig // 意图分析(小韭菜)使用的 LLM 配置
-	aiConfigResolver   AIConfigResolver // AI配置解析器
+	modelFactory      *adk.ModelFactory
+	toolRegistry      *tools.Registry
+	mcpManager        *mcp.Manager
+	memoryManager     *memory.Manager
+	memoryAIConfig    *models.AIConfig // 记忆管理使用的 LLM 配置
+	moderatorAIConfig *models.AIConfig // 意图分析(小韭菜)使用的 LLM 配置
+	aiConfigResolver  AIConfigResolver // AI配置解析器
 }
 
 // NewServiceFull 创建完整配置的会议室服务
@@ -708,16 +708,18 @@ func (s *Service) runSingleAgentWithHistory(
 				})
 			}
 
-			// 流式文本
+			// 流式文本：只累积 Partial 片段，忽略最终聚合响应（避免重复）
 			if part.Text != "" {
-				content += part.Text
-				if progressCallback != nil && event.LLMResponse.Partial {
-					progressCallback(ProgressEvent{
-						Type:      "streaming",
-						AgentID:   cfg.ID,
-						AgentName: cfg.Name,
-						Content:   part.Text,
-					})
+				if event.LLMResponse.Partial {
+					content += part.Text
+					if progressCallback != nil {
+						progressCallback(ProgressEvent{
+							Type:      "streaming",
+							AgentID:   cfg.ID,
+							AgentName: cfg.Name,
+							Content:   part.Text,
+						})
+					}
 				}
 			}
 		}
