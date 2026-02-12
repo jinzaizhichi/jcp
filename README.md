@@ -80,7 +80,7 @@ go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
 ```bash
 git clone https://github.com/run-bigpig/jcp.git
-cd ccjc
+cd jcp
 ```
 
 ### 安装依赖
