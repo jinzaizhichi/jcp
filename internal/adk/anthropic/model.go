@@ -26,10 +26,11 @@ var _ model.LLM = &AnthropicModel{}
 
 // AnthropicModel Anthropic Messages API 模型
 type AnthropicModel struct {
-	httpClient *http.Client
-	baseURL    string
-	apiKey     string
-	modelName  string
+	httpClient   *http.Client
+	baseURL      string
+	apiKey       string
+	modelName    string
+	noSystemRole bool
 }
 
 func normalizeBaseURL(baseURL string) string {
@@ -39,12 +40,13 @@ func normalizeBaseURL(baseURL string) string {
 }
 
 // NewAnthropicModel 创建 Anthropic 模型
-func NewAnthropicModel(modelName, apiKey, baseURL string, httpClient *http.Client) *AnthropicModel {
+func NewAnthropicModel(modelName, apiKey, baseURL string, httpClient *http.Client, noSystemRole bool) *AnthropicModel {
 	return &AnthropicModel{
-		httpClient: httpClient,
-		baseURL:    normalizeBaseURL(baseURL),
-		apiKey:     apiKey,
-		modelName:  modelName,
+		httpClient:   httpClient,
+		baseURL:      normalizeBaseURL(baseURL),
+		apiKey:       apiKey,
+		modelName:    modelName,
+		noSystemRole: noSystemRole,
 	}
 }
 
@@ -101,7 +103,7 @@ func (m *AnthropicModel) doRequest(ctx context.Context, ar *MessagesRequest) (*h
 // generate 非流式生成
 func (m *AnthropicModel) generate(ctx context.Context, req *model.LLMRequest) iter.Seq2[*model.LLMResponse, error] {
 	return func(yield func(*model.LLMResponse, error) bool) {
-		ar, err := toAnthropicRequest(req, m.modelName, m.baseURL)
+		ar, err := toAnthropicRequest(req, m.modelName, m.noSystemRole)
 		if err != nil {
 			yield(nil, err)
 			return
@@ -140,7 +142,7 @@ func (m *AnthropicModel) generate(ctx context.Context, req *model.LLMRequest) it
 // generateStream 流式生成
 func (m *AnthropicModel) generateStream(ctx context.Context, req *model.LLMRequest) iter.Seq2[*model.LLMResponse, error] {
 	return func(yield func(*model.LLMResponse, error) bool) {
-		ar, err := toAnthropicRequest(req, m.modelName, m.baseURL)
+		ar, err := toAnthropicRequest(req, m.modelName, m.noSystemRole)
 		if err != nil {
 			yield(nil, err)
 			return

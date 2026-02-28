@@ -27,7 +27,7 @@ func TestToAnthropicRequest_Basic(t *testing.T) {
 		},
 	}
 
-	ar, err := toAnthropicRequest(req, "claude-opus-4-6", "https://api.anthropic.com")
+	ar, err := toAnthropicRequest(req, "claude-opus-4-6", false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestNormalizeBaseURL(t *testing.T) {
 }
 
 func TestNewAnthropicModel_NormalizesBaseURL(t *testing.T) {
-	m := NewAnthropicModel("claude-sonnet-4", "key", "https://api.anthropic.com/v1/", http.DefaultClient)
+	m := NewAnthropicModel("claude-sonnet-4", "key", "https://api.anthropic.com/v1/", http.DefaultClient, false)
 	if strings.Contains(m.baseURL, "/v1") {
 		t.Fatalf("expected normalized baseURL without /v1, got %q", m.baseURL)
 	}
@@ -257,7 +257,7 @@ func TestIntegration_NonStreaming(t *testing.T) {
 		t.Skip("跳过集成测试：未设置 ANTHROPIC_TEST_URL / ANTHROPIC_TEST_KEY")
 	}
 
-	m := NewAnthropicModel("claude-opus-4-6", apiKey, baseURL, http.DefaultClient)
+	m := NewAnthropicModel("claude-opus-4-6", apiKey, baseURL, http.DefaultClient, false)
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
 			{Role: "user", Parts: []*genai.Part{{Text: "Reply with exactly: PONG"}}},
@@ -288,7 +288,7 @@ func TestIntegration_Streaming(t *testing.T) {
 		t.Skip("跳过集成测试：未设置 ANTHROPIC_TEST_URL / ANTHROPIC_TEST_KEY")
 	}
 
-	m := NewAnthropicModel("claude-opus-4-6", apiKey, baseURL, http.DefaultClient)
+	m := NewAnthropicModel("claude-opus-4-6", apiKey, baseURL, http.DefaultClient, false)
 	req := &model.LLMRequest{
 		Contents: []*genai.Content{
 			{Role: "user", Parts: []*genai.Part{{Text: "Reply with exactly: PONG"}}},

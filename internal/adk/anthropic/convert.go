@@ -40,15 +40,8 @@ func extractTextFromContent(content *genai.Content) string {
 	return strings.Join(texts, "\n")
 }
 
-const anthropicOfficialHost = "api.anthropic.com"
-
-// isOfficialAPI 判断是否为 Anthropic 官方 API 地址
-func isOfficialAPI(baseURL string) bool {
-	return strings.Contains(baseURL, anthropicOfficialHost)
-}
-
 // toAnthropicRequest 将 ADK LLMRequest 转换为 Anthropic Messages 请求
-func toAnthropicRequest(req *model.LLMRequest, modelName, baseURL string) (*MessagesRequest, error) {
+func toAnthropicRequest(req *model.LLMRequest, modelName string, noSystemRole bool) (*MessagesRequest, error) {
 	ar := &MessagesRequest{
 		Model:     modelName,
 		MaxTokens: 4096, // Anthropic 要求必须设置
@@ -66,9 +59,9 @@ func toAnthropicRequest(req *model.LLMRequest, modelName, baseURL string) (*Mess
 		return nil, err
 	}
 
-	// 非官方 API：system 降级为第一条 user message
+	// 非官方 API 或不支持 system role：降级为第一条 user message
 	if systemText != "" {
-		if isOfficialAPI(baseURL) {
+		if !noSystemRole {
 			ar.System = systemText
 		} else {
 			systemMsg := Message{

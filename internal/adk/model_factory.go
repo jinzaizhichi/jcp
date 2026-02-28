@@ -162,7 +162,7 @@ func (f *ModelFactory) createAnthropicModel(config *models.AIConfig) (model.LLM,
 	httpClient := &http.Client{
 		Transport: &uaTransport{base: proxy.GetManager().GetTransport()},
 	}
-	return anthropic.NewAnthropicModel(config.ModelName, config.APIKey, baseURL, httpClient), nil
+	return anthropic.NewAnthropicModel(config.ModelName, config.APIKey, baseURL, httpClient, config.NoSystemRole), nil
 }
 
 // createOpenAIResponsesModel 创建使用 Responses API 的 OpenAI 模型
@@ -199,14 +199,22 @@ func (f *ModelFactory) TestConnection(ctx context.Context, config *models.AIConf
 // systemRoleProbeKeyword 探测暗号，不可能在正常对话中自然出现
 const systemRoleProbeKeyword = "SYS_PROBE_7X3K"
 
-// DetectSystemRoleSupport 检测 OpenAI 兼容接口是否支持 system role
+// DetectSystemRoleSupport 检测接口是否支持 system role
 // 通过系统指令要求模型回复特定暗号，检查响应中是否包含该暗号
 // 返回 true 表示不支持（需要降级）
 func (f *ModelFactory) DetectSystemRoleSupport(ctx context.Context, config *models.AIConfig) bool {
-	if config.Provider != models.AIProviderOpenAI {
-		return false // Gemini/VertexAI/Anthropic 原生支持
+	switch config.Provider {
+	case models.AIProviderOpenAI:
+		return f.detectOpenAISystemRole(ctx, config)
+	case models.AIProviderAnthropic:
+		return f.detectAnthropicSystemRole(ctx, config)
+	default:
+		return false // Gemini/VertexAI 原生支持
 	}
+}
 
+// detectOpenAISystemRole 检测 OpenAI 兼容接口是否支持 system role
+func (f *ModelFactory) detectOpenAISystemRole(ctx context.Context, config *models.AIConfig) bool {
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
@@ -244,17 +252,15 @@ func (f *ModelFactory) DetectSystemRoleSupport(ctx context.Context, config *mode
 	respBody, statusCode, err := f.doProbeRequest(ctx, endpoint, config.APIKey, transport, body)
 	if err != nil {
 		log.Warn("模型 [%s] system role 探测请求失败: %v", config.ModelName, err)
-		return false // 请求失败时保守处理，不降级
+		return false
 	}
 
-	// HTTP 非 200，接口本身不支持 system role
 	if statusCode != http.StatusOK {
 		log.Warn("模型 [%s] 不支持 system role (HTTP %d): %s",
 			config.ModelName, statusCode, string(respBody))
 		return true
 	}
 
-	// 从响应中提取文本内容，检查是否包含暗号
 	replyText := f.extractReplyText(respBody, config.UseResponses)
 	if strings.Contains(replyText, systemRoleProbeKeyword) {
 		log.Info("模型 [%s] 支持 system role（暗号匹配）", config.ModelName)
@@ -264,6 +270,80 @@ func (f *ModelFactory) DetectSystemRoleSupport(ctx context.Context, config *mode
 	log.Warn("模型 [%s] 不遵循 system role 指令（回复: %s）",
 		config.ModelName, replyText)
 	return true
+}
+
+// detectAnthropicSystemRole 检测 Anthropic 兼容接口是否支持 system 字段
+func (f *ModelFactory) detectAnthropicSystemRole(ctx context.Context, config *models.AIConfig) bool {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	baseURL := normalizeAnthropicBaseURL(config.BaseURL)
+	transport := proxy.GetManager().GetTransport()
+
+	body := map[string]any{
+		"model":      config.ModelName,
+		"max_tokens": 1,
+		"system":     fmt.Sprintf("Reply with exactly: %s", systemRoleProbeKeyword),
+		"messages":   []map[string]string{{"role": "user", "content": "hi"}},
+	}
+
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return false
+	}
+
+	endpoint, err := url.JoinPath(baseURL, "v1", "messages")
+	if err != nil {
+		return false
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(jsonBody))
+	if err != nil {
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", config.APIKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("User-Agent", cherryStudioUA)
+
+	client := &http.Client{Transport: transport}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Warn("模型 [%s] Anthropic system role 探测失败: %v", config.ModelName, err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+
+	if resp.StatusCode != http.StatusOK {
+		log.Warn("模型 [%s] 不支持 system 字段 (HTTP %d): %s",
+			config.ModelName, resp.StatusCode, string(respBody))
+		return true
+	}
+
+	// 从 Anthropic 响应中提取文本
+	replyText := f.extractAnthropicReplyText(respBody)
+	if strings.Contains(replyText, systemRoleProbeKeyword) {
+		log.Info("模型 [%s] 支持 system 字段（暗号匹配）", config.ModelName)
+		return false
+	}
+
+	log.Warn("模型 [%s] 不遵循 system 指令（回复: %s）", config.ModelName, replyText)
+	return true
+}
+
+// extractAnthropicReplyText 从 Anthropic Messages 响应中提取文本
+func (f *ModelFactory) extractAnthropicReplyText(respBody []byte) string {
+	var resp struct {
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := json.Unmarshal(respBody, &resp); err != nil || len(resp.Content) == 0 {
+		return ""
+	}
+	return resp.Content[0].Text
 }
 
 // testOpenAIConnection 测试 OpenAI 兼容接口连通性
