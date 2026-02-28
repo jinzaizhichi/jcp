@@ -206,6 +206,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose 
     openClaw: OpenClawConfig;
     moderatorAiId: string;
     strategyAiId: string;
+    candleColorMode: string;
   }>) => {
     // 合并待保存的更新
     pendingUpdatesRef.current = { ...pendingUpdatesRef.current, ...updates };
@@ -345,7 +346,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose 
               />
             )}
             {activeTab === 'chart' && (
-              <ChartColorSettings />
+              <ChartColorSettings saveConfig={saveConfig} />
             )}
             {activeTab === 'proxy' && (
               <ProxySettings
@@ -1470,7 +1471,7 @@ const MCPEditForm: React.FC<MCPEditFormProps> = ({ server, status, tools, onBack
 };
 
 // ========== 图表颜色设置选项卡 ==========
-const ChartColorSettings: React.FC = () => {
+const ChartColorSettings: React.FC<{ saveConfig: (updates: { candleColorMode: string }) => void }> = ({ saveConfig }) => {
   const { colors } = useTheme();
   const { mode, setMode } = useCandleColor();
 
@@ -1491,7 +1492,10 @@ const ChartColorSettings: React.FC = () => {
         {options.map(opt => (
           <button
             key={opt.value}
-            onClick={() => setMode(opt.value)}
+            onClick={() => {
+              setMode(opt.value);
+              saveConfig({ candleColorMode: opt.value });
+            }}
             className={`relative p-4 rounded-xl border-2 transition-all ${
               mode === opt.value
                 ? 'border-[var(--accent)] bg-[var(--accent)]/10'

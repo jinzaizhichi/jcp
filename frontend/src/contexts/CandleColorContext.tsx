@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { getConfig, updateConfig } from '../services/configService';
+import { getConfig } from '../services/configService';
 
 export type CandleColorMode = 'red-up' | 'green-up';
 
@@ -30,15 +30,8 @@ export const CandleColorProvider: React.FC<{ children: ReactNode }> = ({ childre
     }).catch(() => {});
   }, []);
 
-  const setMode = useCallback(async (newMode: CandleColorMode) => {
+  const setMode = useCallback((newMode: CandleColorMode) => {
     setModeState(newMode);
-    try {
-      const config = await getConfig();
-      config.candleColorMode = newMode;
-      await updateConfig(config);
-    } catch (e) {
-      console.error('Failed to save candleColorMode:', e);
-    }
   }, []);
 
   const colors = COLOR_MAP[mode];

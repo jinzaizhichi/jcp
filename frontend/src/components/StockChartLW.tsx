@@ -229,7 +229,27 @@ export const StockChartLW: React.FC<StockChartProps> = ({ data, period, onPeriod
     };
     chart.applyOptions(layoutOpts);
     volumeChart.applyOptions(layoutOpts);
-  }, [chartColors]);
+
+    // 更新 K线蜡烛颜色（颜色模式切换时生效）
+    if (mainSeriesRef.current && seriesTypeRef.current === 'candle') {
+      mainSeriesRef.current.applyOptions({
+        upColor: chartColors.upColor,
+        downColor: chartColors.downColor,
+        wickUpColor: chartColors.upColor,
+        wickDownColor: chartColors.downColor,
+      });
+    }
+
+    // 更新成交量柱颜色
+    if (volumeSeriesRef.current && safeData.length > 0) {
+      const volData: HistogramData[] = safeData.map(d => ({
+        time: parseTime(d.time),
+        value: d.volume,
+        color: d.close >= d.open ? chartColors.upColor + '99' : chartColors.downColor + '99',
+      }));
+      volumeSeriesRef.current.setData(volData);
+    }
+  }, [chartColors, safeData]);
 
   // ========== 周期变化：更新 timeScale 选项 + 交互模式 ==========
   useEffect(() => {
