@@ -267,7 +267,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose 
             ))}
           </div>
           {/* 右侧内容 */}
-          <div className="flex-1 overflow-y-auto p-4 fin-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 fin-scrollbar text-left">
             {activeTab === 'provider' && (
               <ProviderSettings
                 configs={aiConfigs}

@@ -169,7 +169,7 @@ const HotItemList: React.FC<{
   const items = result.items || [];
 
   return (
-    <div className="flex-1 overflow-y-auto fin-scrollbar p-3">
+    <div className="flex-1 overflow-y-auto fin-scrollbar p-3 text-left">
       {items.map((item, idx) => (
         <HotItemRow key={item.id || idx} item={item} isDark={isDark} />
       ))}
@@ -196,18 +196,25 @@ const HotItemRow: React.FC<{ item: hottrend.HotItem; isDark: boolean }> = ({ ite
   return (
     <div
       onClick={handleClick}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group ${isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-200/50'}`}
+      className={`flex items-start gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group ${isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-200/50'}`}
     >
-      <span className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold ${getRankColor(item.rank)}`}>
+      <span className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold shrink-0 mt-0.5 ${getRankColor(item.rank)}`}>
         {item.rank}
       </span>
-      <span className={`flex-1 text-sm truncate ${isDark ? 'text-slate-200 group-hover:text-white' : 'text-slate-700 group-hover:text-slate-900'}`}>
-        {item.title}
-      </span>
-      {item.extra && (
-        <span className={`text-xs shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{item.extra}</span>
-      )}
-      <ExternalLink className={`h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
+      <div className="flex-1 min-w-0">
+        <div className={`text-sm line-clamp-1 ${isDark ? 'text-slate-200 group-hover:text-white' : 'text-slate-700 group-hover:text-slate-900'}`}>
+          {item.title}
+        </div>
+        {item.hot_score > 0 && (
+          <div className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            热度 {item.hot_score.toLocaleString()}
+          </div>
+        )}
+        {item.extra && (
+          <div className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{item.extra}</div>
+        )}
+      </div>
+      <ExternalLink className={`h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} />
     </div>
   );
 };

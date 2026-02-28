@@ -465,7 +465,7 @@ const DetailPanel: React.FC<{
   const sellDetails = details.filter(d => d.direction === 'sell');
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 fin-scrollbar">
+    <div className="flex-1 overflow-y-auto p-4 fin-scrollbar text-left">
       <StockHeader item={item} formatAmount={formatAmount} />
       <BrokerSection title="买入前五营业部" details={buyDetails} type="buy" formatAmount={formatAmount} />
       <BrokerSection title="卖出前五营业部" details={sellDetails} type="sell" formatAmount={formatAmount} />

@@ -381,7 +381,7 @@ const App: React.FC = () => {
           {/* 快讯下拉列表 */}
           {showTelegraphList && (
             <div
-              className="absolute top-full left-0 right-0 mt-2 fin-panel border fin-divider rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto fin-scrollbar"
+              className="absolute top-full left-0 right-0 mt-2 fin-panel border fin-divider rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto fin-scrollbar text-left"
               onMouseLeave={() => setShowTelegraphList(false)}
             >
               <div className={`p-2 border-b fin-divider text-xs font-medium ${colors.isDark ? 'text-slate-400' : 'text-slate-500'}`}>

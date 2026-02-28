@@ -85,7 +85,7 @@ export const PositionDialog: React.FC<PositionDialogProps> = ({
         </div>
 
         {/* Form */}
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 text-left">
           <div>
             <label className={`block text-sm mb-1 ${colors.isDark ? 'text-slate-400' : 'text-slate-500'}`}>持仓数量（股）</label>
             <input

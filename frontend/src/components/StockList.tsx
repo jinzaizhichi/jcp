@@ -118,7 +118,7 @@ export const StockList: React.FC<StockListProps> = ({
 
           {/* 搜索下拉结果 */}
           {showDropdown && (
-            <div className={`absolute top-full left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg shadow-xl ${colors.isDark ? 'bg-slate-800 border border-slate-600' : 'bg-white border border-slate-300'}`}>
+            <div className={`absolute top-full left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg shadow-xl text-left ${colors.isDark ? 'bg-slate-800 border border-slate-600' : 'bg-white border border-slate-300'}`}>
               {searchResults.map((result) => (
                 <div
                   key={result.symbol}
