@@ -80,6 +80,7 @@ func (m *AnthropicModel) doRequest(ctx context.Context, ar *MessagesRequest) (*h
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("x-api-key", m.apiKey)
 	httpReq.Header.Set("anthropic-version", "2023-06-01")
+	httpReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) CherryStudio/1.2.4 Chrome/126.0.6478.234 Electron/31.7.6 Safari/537.36")
 
 	return m.httpClient.Do(httpReq)
 }

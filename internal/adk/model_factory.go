@@ -28,6 +28,18 @@ import (
 
 var log = logger.New("ModelFactory")
 
+const cherryStudioUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) CherryStudio/1.2.4 Chrome/126.0.6478.234 Electron/31.7.6 Safari/537.36"
+
+// uaTransport 包装 RoundTripper，自动注入 User-Agent
+type uaTransport struct {
+	base http.RoundTripper
+}
+
+func (t *uaTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", cherryStudioUA)
+	return t.base.RoundTrip(req)
+}
+
 // ModelFactory 模型工厂，根据配置创建对应的 adk model
 type ModelFactory struct{}
 
@@ -62,7 +74,7 @@ func (f *ModelFactory) createGeminiModel(ctx context.Context, config *models.AIC
 		Backend: genai.BackendGeminiAPI,
 		// 注入代理 Transport
 		HTTPClient: &http.Client{
-			Transport: proxy.GetManager().GetTransport(),
+			Transport: &uaTransport{base: proxy.GetManager().GetTransport()},
 		},
 	}
 
@@ -72,42 +84,27 @@ func (f *ModelFactory) createGeminiModel(ctx context.Context, config *models.AIC
 // createVertexAIModel 创建 Vertex AI 模型
 func (f *ModelFactory) createVertexAIModel(ctx context.Context, config *models.AIConfig) (model.LLM, error) {
 	// 获取代理 Transport
-	proxyTransport := proxy.GetManager().GetTransport()
+	uaRT := &uaTransport{base: proxy.GetManager().GetTransport()}
 
 	// 获取凭证
 	var creds *auth.Credentials
 	var err error
 
+	detectOpts := &credentials.DetectOptions{
+		Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
+		Client: &http.Client{Transport: uaRT},
+	}
 	if config.CredentialsJSON != "" {
-		// 使用提供的证书 JSON
-		creds, err = credentials.DetectDefault(&credentials.DetectOptions{
-			Scopes:          []string{"https://www.googleapis.com/auth/cloud-platform"},
-			CredentialsJSON: []byte(config.CredentialsJSON),
-			Client: &http.Client{
-				Transport: proxyTransport,
-			},
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create credentials: %w", err)
-		}
-	} else {
-		// 使用默认凭证
-		creds, err = credentials.DetectDefault(&credentials.DetectOptions{
-			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
-			Client: &http.Client{
-				Transport: proxyTransport,
-			},
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to detect default credentials: %w", err)
-		}
+		detectOpts.CredentialsJSON = []byte(config.CredentialsJSON)
+	}
+	creds, err = credentials.DetectDefault(detectOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect credentials: %w", err)
 	}
 
-	// 使用 httptransport.NewClient 创建带认证和代理的 HTTP Client
-	// BaseRoundTripper 用于注入代理 Transport，Credentials 用于自动添加认证 header
 	httpClient, err := httptransport.NewClient(&httptransport.Options{
 		Credentials:      creds,
-		BaseRoundTripper: proxyTransport,
+		BaseRoundTripper: uaRT,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create authenticated HTTP client: %w", err)
@@ -143,7 +140,7 @@ func (f *ModelFactory) createOpenAIModel(config *models.AIConfig) (model.LLM, er
 	openaiCfg.BaseURL = normalizeOpenAIBaseURL(config.BaseURL)
 	// 注入代理 Transport
 	openaiCfg.HTTPClient = &http.Client{
-		Transport: proxy.GetManager().GetTransport(),
+		Transport: &uaTransport{base: proxy.GetManager().GetTransport()},
 	}
 
 	return openai.NewOpenAIModel(config.ModelName, openaiCfg, config.NoSystemRole), nil
@@ -163,7 +160,7 @@ func normalizeAnthropicBaseURL(baseURL string) string {
 func (f *ModelFactory) createAnthropicModel(config *models.AIConfig) (model.LLM, error) {
 	baseURL := normalizeAnthropicBaseURL(config.BaseURL)
 	httpClient := &http.Client{
-		Transport: proxy.GetManager().GetTransport(),
+		Transport: &uaTransport{base: proxy.GetManager().GetTransport()},
 	}
 	return anthropic.NewAnthropicModel(config.ModelName, config.APIKey, baseURL, httpClient), nil
 }
@@ -174,7 +171,7 @@ func (f *ModelFactory) createOpenAIResponsesModel(config *models.AIConfig) (mode
 
 	// 使用代理管理器的 HTTP Client
 	httpClient := &http.Client{
-		Transport: proxy.GetManager().GetTransport(),
+		Transport: &uaTransport{base: proxy.GetManager().GetTransport()},
 	}
 	return openai.NewResponsesModel(config.ModelName, config.APIKey, baseURL, httpClient, config.NoSystemRole), nil
 }
@@ -307,6 +304,7 @@ func (f *ModelFactory) testOpenAIConnection(ctx context.Context, config *models.
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+config.APIKey)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) CherryStudio/1.2.4 Chrome/126.0.6478.234 Electron/31.7.6 Safari/537.36")
 
 	client := &http.Client{Transport: transport}
 	resp, err := client.Do(req)
@@ -370,6 +368,7 @@ func (f *ModelFactory) testAnthropicConnection(ctx context.Context, config *mode
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-api-key", config.APIKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) CherryStudio/1.2.4 Chrome/126.0.6478.234 Electron/31.7.6 Safari/537.36")
 
 	client := &http.Client{Transport: transport}
 	resp, err := client.Do(req)
@@ -419,6 +418,7 @@ func (f *ModelFactory) doProbeRequest(ctx context.Context, endpoint, apiKey stri
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) CherryStudio/1.2.4 Chrome/126.0.6478.234 Electron/31.7.6 Safari/537.36")
 
 	client := &http.Client{Transport: transport}
 	resp, err := client.Do(req)
